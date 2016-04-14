@@ -1,0 +1,31 @@
+1.
+Individual handler function is needed for each exception/interrupt to handle the error codes pushed at the time of exception/interrupt handling. In some cases, error codes are automatically pushed by the CPU (TRAPHANDLER macro in trapentry.S), whereas in other cases we explicitly push error codes to the stack (TRAPHANDLER_NOEC macro in trapentry.S) that allow specific handling of some exceptions. Also different trap numbers have to be pushed for the traps on the stack.
+
+--------------------------
+
+2.
+No, we did not do anything to make the user/softint program behave correctly. Interrupt vector 13 is produced on a general protection fault (trap 13), despite the code saying int $14, because the user is not allowed to invoke exceptions of its choice, which would otherwise lead to security flaw as a user might invoke a desired exception to execute a malicious code with kernel privileges. So, the kernel handles the exceptions invoking interrupt vector 13 considering the user tried to access memory that it does not have privileges for, and thus causing a general protection fault.
+
+--------------------------
+
+3.
+The break point test will either generate a break point exception or a general protection fault depending on the dpl arguement of the SETGATE macro used to initialize the break point entry in the IDT.
+The given break point test invokes the interrupt gate explicitly using the int3 instruction. So, in case if the break point entry in the IDT is initialized setting the privilege level required to invoke the interrupt gate explicitly using int instruction to be kernel (dpl = 0), the user program will be accessing memory location that it does not have privileges for, thereby generating a general protection fault. But in case if the break point entry in the IDT is initialized setting the privilege level required as user (dpl = 3), the break point exception is invoked.
+
+--------------------------
+
+4.
+The mechanisms ensure protected control transfers making sure that kernel can be entered only under carefully controlled conditions. In context of the program user/softint, the user program tries to enter the kernel using int14 statement. But as specified at the entry point of the interrupt, a kernel privilege level is required to enter kernel from that entry point which prevented a page fault exception at this statement (executing int14) and instead invoked a general protection fault handler. Hence it is set up at the time of initialization of these gates, the privilege level required to enter kernel through these entry points.
+
+--------------------------
+
+Challenge2.
+=> 	To continue execution from the current location till the next breakpoint we set the Trap Flag bit of EFLAGS in the trapframe to 0 by the command (tf->tf_eflags &= ~FL_TF) break from the monitor. This is done to nullify the debug mode( if trap flag bit is already set to 1) and thus continuing the execution from current point till next breakpoint.
+=>	To execute single instruction at a time, we set the Trap Flag bit of EFLAGS in the trapframe to 1 by the command (tf->tf_eflags |= FL_TF). The processor then invokes Debug exception on reading the trap flag bit 1 while executing the next instruction. And thus only one instruction is executed at a time.
+
+==============================================================
+Learnings:
+
+1.	CPU pushes error code to the stack for only some of the exceptions/interrupts. For others, error code has to explicitly pushed on the stack by the user.
+2.	In case of system calls, the application passes system call code and the system call arguments in registers so that the kernel won't need to access the user exvironment's stack or instruction stream.
+3.	The kernel will never suffer a page fault due to dereferencing a user-supplied pointer, whereas if the kernel page-faults manipulationg its own data structures, the fault handler should panic the kernel and terminate it.

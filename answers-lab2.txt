@@ -1,0 +1,44 @@
+1.
+The variable x should have type uintptr_t.
+This is because we intend to store the value = 10 to memory location x. This is only possible when x in uintptr_t type as it can be dereferenced by first casting it to a pointer type. But on casting a physaddr_t to a pointer and then dereferencing it, we probably won't get the memory location at which value 10 is stored.
+
+---------------------------
+2.
+Entry		Base Virtual Address		Points to(Logically)
+956				0xef000000				Physical page state array
+959				0xefc00000				Kernel stack backed by physical memory
+960-1023		0xf0000000				All the physical memory above KERNBASE (256 MB)
+
+---------------------------
+3.
+The permission bits of the kernel environment are kept as Read-Write for kernel and NONE for user. Hence the user won't be able to read or write to the kernel's memory.
+The mechanism of paged virtual memory and permission bits set in the entries of the page table is used to protect the kernel memory as it can only be accessed and written by the kernel and can't be accessed by user.
+
+---------------------------
+4.
+The operating system in the lab can support 256MB of physical memory. This is because the mapping of the kernel starts from 0xf0000000, and due to 32-bit operating system memory is restricted to 0xffffffff. Hence available physical memory = 0xffffffff-0xf0000000 = 256MB.
+The amount of physical memory can be increased by mapping kernel at lower memory addresses.
+
+---------------------------
+5.
+Space Overhead for memory management includes of the following components:
+(a)	Pages array:
+		Memory allocated = 256MB/(memory locations in 1 page) = 256MB/1K = 256KB
+(b) Page Directory:
+		Memory allocated = Page Table Size = 4KB
+(c)	64 Page Tables to map the 256MB memory:
+		Memory allocated = 64*PGSIZE
+						 = 256KB
+Total Overhead = 256KB + 4KB + 256KB = 516KB
+
+---------------------------
+6.
+Transition to running at an EIP above KERNBASE happends after the instruction "jmp *%eax" in entry.S. This is when paging is enabled.
+It is possible for us to continue executing at a low EIP between when we enable paging and when we begin running at an EIP above KERNBASE because entrypgdir also maps virtual addresses [0,4MB) to physical addresses [0,4MB).
+The transition is necessary because after enabling paging, kern_pgdir maps the virtual address above KERNBASE(where C code is linked to run) to the physical addresses and the virtual addresses [0,4MB) are abandoned.
+
+---------------------------
+Learnings:
+(1)I learnt how we transition from running a low EIP to running at an EIP above kernel base, and why this is necessary.
+(2)Difference on dereferencing a virtual memory address by casting it to a pointer and dereferencing a physical memory address by casting it to a pointer type (uintptr_t v/s physaddr_t).
+(3) Inspecting memory at physical and virtual addresses separately using xp command in QEMU monitor and x command in GDB.

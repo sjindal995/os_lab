@@ -1,0 +1,27 @@
+1.
+kern/mpentry.S uses MPBOOTPHYS to change the virtual address to a physical address. mpentry.S is loaded by the bootloader without any special treatment so virtual addresses are converted to physical address using MPBOOTPHYS.
+If omitted in mpentry.S, it will not allow us to load the code correctly (below KERNBASE) from the load position in the physical memory.
+
+-------------------------------
+
+2.
+If a process enters the kernel it pushes the trapframe onto the stack and pops its trapframe on exiting the kernel. In case of a shared stack, if another process enters the stack in the duration between enetring and exiting of the first stack, the process while exiting will pop other process's trapframe from the stack. Thus it will not re-enter at the correct location.
+
+-------------------------------
+
+3.
+e is a pointer allocated on the current processor's kernel stack. As the kernel part of the virtual memory of all the environments maps to same physical addresses, e can be dereferenced both before and after the addressing switch.
+
+-------------------------------
+
+4.
+The old environments's registers are saved so that they can be restored later, so as to treat as if the environment was never interrupted, and resume from the position it was switched out by the kernel. This happens when we switch from user mode to the kernel mode in the trap frame.
+
+-------------------------------
+
+Learnings:
+(1) We can address the race conditions when multiple CPUs run kernel code simultaneously using a single kernel lock that is held whenever an environment enters a kernel mode and released when the environment returns to the user mode. So, now multiple environments can run concurrently on any number of CPUs but only one environment can run in kernel mode.
+
+(2) A call to fork() is frequently followed by a call to exec() in the child process replacing the child's memory (copied from the parent) with the new program. In this case the time spent in cpying the parent's address space to the child is wasted as the child uses very little of it before calling exec(). This problem is resolved using Copy-on-Write technique that allows the parent and child to share the memory mapped into their respective address spaces until one of them modifies it. 
+
+(3) IRQ_OFFSET is chosen so that the device interrupts do not overlap with the processor exceptions, which could cause confusion.Setting IRQ_OFFSET can cause huge confusion between handling hardware interrupts and handling processor exceptions.
