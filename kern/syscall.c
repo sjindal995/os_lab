@@ -355,6 +355,7 @@ sys_ipc_recv(void *dstva)
 
 char* get_cmd(char* buf){
 	char* w_pos = strchr(buf, ' ');
+	cprintf("hddddddddddddhdhh\n");
 	if(w_pos == NULL){
 		return buf;
 	}
@@ -366,23 +367,44 @@ char* get_cmd(char* buf){
 
 
 void sys_exec(char* buf){
-	cprintf("hello");
-	uint32_t parent_id = curenv->env_parent_id;
+	// uint32_t parent_id = curenv->env_parent_id;
 	uint32_t cur_id = curenv->env_id;
+	char* bufcpy = "";
+	memcpy(bufcpy, buf, strlen(buf));
 	env_free(curenv);
-	struct Env* e;
-	env_alloc(&e, curenv->env_parent_id);
-	e->env_id = cur_id;
-	char* cmd = get_cmd(buf);
-	// char* x = "user";
-	// char* x = strcat(x, (const char*)cmd);
-	// uint8_t* binary;
-	// if(strcmp(x, (const char*)("primes"))){
-		extern uint8_t ENV_PASTE3(_binary_obj_, user_primes , _start)[];
+	// struct Env* e;
+	env_alloc(&curenv, curenv->env_parent_id);
+	curenv->env_id = cur_id;
+	char* cmd = get_cmd(bufcpy);
+	// cprintf("hddddddddddddhdhh\n");
+	// if(strcmp(cmd, (const char*)("factorial"))){
+	// 	extern uint8_t ENV_PASTE3(_binary_obj_, user_factorial , _start)[];
+	// 	load_icode(curenv,ENV_PASTE3(_binary_obj_, user_factorial , _start));
 	// }
-	load_icode(e,ENV_PASTE3(_binary_obj_, user_primes , _start));
+	// else if(strcmp(cmd, (const char*)("fibonacci"))) {
+	// 	extern uint8_t ENV_PASTE3(_binary_obj_, user_fibonacci , _start)[];
+	// 	load_icode(curenv,ENV_PASTE3(_binary_obj_, user_fibonacci , _start));
+	// }
+	// else if(strcmp(cmd, (const char*)("time"))) {
+	// 	extern uint8_t ENV_PASTE3(_binary_obj_, user_time , _start)[];
+	// 	load_icode(curenv,ENV_PASTE3(_binary_obj_, user_time , _start));
+	// }
+	// else if(strcmp(cmd, (const char*)("date"))) {
+	// 	extern uint8_t ENV_PASTE3(_binary_obj_, user_date , _start)[];
+	// 	load_icode(curenv,ENV_PASTE3(_binary_obj_, user_date , _start));
+	// }
+	// else if(strcmp(cmd, (const char*)("cal"))) {
+	// 	extern uint8_t ENV_PASTE3(_binary_obj_, user_cal , _start)[];
+	// 	load_icode(curenv,ENV_PASTE3(_binary_obj_, user_cal , _start));
+	// }
+	// else{
+	// 	// panic("command not supported");
+	// }
+	extern uint8_t ENV_PASTE3(_binary_obj_, user_primes , _start)[];
+	load_icode(curenv,ENV_PASTE3(_binary_obj_, user_primes , _start));
 	// lcr3(e->env_pgdir);
-	env_run(e);
+	env_run(curenv);
+	// env_destroy(e);
 }
 
 // Dispatches to the correct kernel function, passing the arguments.

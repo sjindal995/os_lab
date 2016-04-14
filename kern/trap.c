@@ -255,6 +255,12 @@ trap_dispatch(struct Trapframe *tf)
 			lapic_eoi();
 			sched_yield();
 			break;
+		case IRQ_OFFSET+IRQ_KBD:
+			kbd_intr();
+			break;
+		case IRQ_OFFSET+IRQ_SERIAL:
+			serial_intr();
+			break;
 		default:
 			print_trapframe(tf);
 			if (tf->tf_cs == GD_KT)
