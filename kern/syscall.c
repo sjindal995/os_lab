@@ -353,7 +353,36 @@ sys_ipc_recv(void *dstva)
 	return 0;
 }
 
+char* get_cmd(char* buf){
+	char* cmd;
+	char* w_pos = strchr(buf, ' ');
+	if(w_pos == NULL){
+		cmd = buf;
+		return cmd;
+	}
+	cmd = malloc(strlen(buf));
+	for(;buf != w_pos; buf++, cmd++){
+		*cmd = *buf;
+	}
+	return cmd;
+}
 
+
+
+void sys_exec(char* buf){
+	parent_id = curenv->env_parent_id;
+	cur_id = curenv->env_id;
+	env_free(curenv);
+	struct Env* e;
+	env_alloc(&e, curenv->env_parent_id);
+	e->env_id = cur_id;
+	char* cmd = get_cmd(buf);
+	char* x = "user";
+	x = strcat(x, (const char*)cmd);
+	uint8_t* binary =  ENV_PASTE3(_binary_obj_, x , _start)[];
+	load_icode(e, binary);
+
+}
 
 // Dispatches to the correct kernel function, passing the arguments.
 int32_t
