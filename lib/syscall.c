@@ -112,6 +112,6 @@ sys_ipc_recv(void *dstva)
 }
 
 void sys_exec(char* buf){
-	syscall(SYS_exec, 0, (uint32_t)buf, 0 , 0, 0, 0)
+	syscall(SYS_exec, 0, (uint32_t)buf, 0 , 0, 0, 0);
 }
 

@@ -13,7 +13,8 @@ readline(const char *prompt)
 		cprintf("%s", prompt);
 
 	i = 0;
-	echoing = iscons(0);
+	// echoing = iscons(0);
+	echoing = 1;
 	while (1) {
 		c = getchar();
 		if (c < 0) {

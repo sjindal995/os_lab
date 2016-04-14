@@ -354,34 +354,35 @@ sys_ipc_recv(void *dstva)
 }
 
 char* get_cmd(char* buf){
-	char* cmd;
 	char* w_pos = strchr(buf, ' ');
 	if(w_pos == NULL){
-		cmd = buf;
-		return cmd;
+		return buf;
 	}
-	cmd = malloc(strlen(buf));
-	for(;buf != w_pos; buf++, cmd++){
-		*cmd = *buf;
-	}
-	return cmd;
+
+	char* cmd = "";
+	strncpy(cmd, (const char*)buf, w_pos-buf);
+	return (cmd);
 }
 
 
-
 void sys_exec(char* buf){
-	parent_id = curenv->env_parent_id;
-	cur_id = curenv->env_id;
+	cprintf("hello");
+	uint32_t parent_id = curenv->env_parent_id;
+	uint32_t cur_id = curenv->env_id;
 	env_free(curenv);
 	struct Env* e;
 	env_alloc(&e, curenv->env_parent_id);
 	e->env_id = cur_id;
 	char* cmd = get_cmd(buf);
-	char* x = "user";
-	x = strcat(x, (const char*)cmd);
-	uint8_t* binary =  ENV_PASTE3(_binary_obj_, x , _start)[];
-	load_icode(e, binary);
-
+	// char* x = "user";
+	// char* x = strcat(x, (const char*)cmd);
+	// uint8_t* binary;
+	// if(strcmp(x, (const char*)("primes"))){
+		extern uint8_t ENV_PASTE3(_binary_obj_, user_primes , _start)[];
+	// }
+	load_icode(e,ENV_PASTE3(_binary_obj_, user_primes , _start));
+	// lcr3(e->env_pgdir);
+	env_run(e);
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
@@ -425,7 +426,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			return sys_ipc_recv((void *)a1);
 		case SYS_exec:
 			sys_exec((char *)a1);
-			return;
+			return 0;
 		default:
 			return -E_INVAL;
 	}

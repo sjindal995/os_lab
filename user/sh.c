@@ -5,7 +5,7 @@ umain(int argc, char **argv)
 {
 	char* buf;
 	while(1){
-		buf = readline(" ");
+		buf = readline("U> ");
 		if(buf == NULL)
 			break;
 		if(fork()==0){
