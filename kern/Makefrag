@@ -56,7 +56,12 @@ KERN_BINFILES :=	user/hello \
 			user/faultreadkernel \
 			user/faultwrite \
 			user/faultwritekernel \
-			user/sh
+			user/sh \
+			user/factorial \
+			user/fibonacci \
+			user/date \
+			user/help \
+			user/echo
 
 # Binary files for LAB4
 KERN_BINFILES +=	user/idle \
