@@ -267,7 +267,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	env_free_list = e->env_link;
 	*newenv_store = e;
 
-	cprintf("[%08x] new env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
+	// cprintf("[%08x] new env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
 	return 0;
 }
 
@@ -414,7 +414,7 @@ env_free(struct Env *e)
 		lcr3(PADDR(kern_pgdir));
 
 	// Note the environment's demise.
-	cprintf("[%08x] free env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
+	// cprintf("[%08x] free env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
 
 	// Flush all mapped pages in the user portion of the address space
 	static_assert(UTOP % PTSIZE == 0);
@@ -461,6 +461,11 @@ env_destroy(struct Env *e)
 	// If e is currently running on other CPUs, we change its state to
 	// ENV_DYING. A zombie environment will be freed the next time
 	// it traps to the kernel.
+	struct Env* parent_env;
+	envid2env(e->env_parent_id, &parent_env, 0);
+	if(parent_env->env_status == ENV_WAIT_CHILD){
+		parent_env->env_status = ENV_RUNNABLE;
+	}
 	if (e->env_status == ENV_RUNNING && curenv != e) {
 		e->env_status = ENV_DYING;
 		return;

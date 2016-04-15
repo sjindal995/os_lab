@@ -354,7 +354,7 @@ sys_ipc_recv(void *dstva)
 }
 
 static char cmd[1024] = {0};
-static char args[5][1024] = {{0}};
+static char args[10][1024] = {{0}};
 
 void get_cmd(char* buf){
 	int i;
@@ -403,6 +403,9 @@ void get_cmd(char* buf){
 				args[index][i-done] = w_pos[1+i];
 			}
 		}
+		if(strcmp(args[index],"&")==0){
+			args[index][0] = '\0';
+		}
 	}
 	// cprintf("buffer: %s, command: %s, arguement: %s\n", buf, cmd, args[1]);
 }
@@ -448,8 +451,15 @@ void sys_exec(char* buf){
 	// extern uint8_t ENV_PASTE3(_binary_obj_, user_hello , _start)[];
 	// load_icode(curenv,ENV_PASTE3(_binary_obj_, user_hello , _start));
 	// lcr3(e->env_pgdir);
+	
 	env_run(curenv);
+	// sched_yield();
+	// cprintf("\n\nheeeeeeeeeeelo---------------\n\n");
 	// env_destroy(e);
+}
+
+void sys_wait(){
+	curenv->env_status = ENV_WAIT_CHILD;
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
@@ -493,6 +503,9 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			return sys_ipc_recv((void *)a1);
 		case SYS_exec:
 			sys_exec((char *)a1);
+			return 0;
+		case SYS_wait:
+			sys_wait();
 			return 0;
 		default:
 			return -E_INVAL;

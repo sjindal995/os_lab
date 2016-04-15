@@ -115,3 +115,6 @@ void sys_exec(char* buf){
 	syscall(SYS_exec, 0, (uint32_t)buf, 0 , 0, 0, 0);
 }
 
+void sys_wait(){
+	syscall(SYS_wait, 0, 0, 0, 0, 0, 0);
+}
