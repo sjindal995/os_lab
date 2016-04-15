@@ -1,12 +1,13 @@
 #include <inc/string.h>
 #include <inc/lib.h>
 
-int fibonacci(int n){
+uint64_t fibonacci(int n){
   if(n<0){
     cprintf("invalid paramter\n");
     return -1;
   }
-  int i,m1,m2,curr;
+  int i;
+  uint64_t m1,m2,curr;
   m1=0;
   m2=1;
   curr=0;
@@ -31,9 +32,9 @@ umain(int argc, char **argv)
   }
   char* endptr;
   int n = strtol((const char*)argv[0], &endptr, 10 );
-  int f = fibonacci(n);
+  uint64_t f = fibonacci(n);
   if(f>=0){
-    cprintf("%d\n",f);
+    cprintf("%lld\n",f);
   }
 
 

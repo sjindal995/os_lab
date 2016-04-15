@@ -385,12 +385,16 @@ void get_cmd(char* buf){
 	if(w_pos-buf < strlen(buf)){
 		int is_quote = 0;
 		int index = 0;
-		int done = 0;
+		// int done = 0;
+		int curr = 0;
 		for(i = 0;i<strlen(buf)-(w_pos-buf)-1;i++){
 			// cprintf("args[0]: %s\n", args[0]);
 			if(is_quote == 0 && w_pos[i+1] == ' '){
+				while(w_pos[i+1] == ' ') i++;
+				i--;
 				index += 1;
-				done = i+1;
+				// done = i+1;
+				curr = 0;
 			}
 			else if(is_quote == 1 && w_pos[i+1] == '\"') {
 				is_quote = 0;
@@ -399,15 +403,16 @@ void get_cmd(char* buf){
 				is_quote = 1;
 			}
 			else{
-				// cprintf("index: %d, args[1]: %c\n", index, w_pos[i+1]);
-				args[index][i-done] = w_pos[1+i];
+				args[index][curr] = w_pos[1+i];
+				curr++;
+				// cprintf("index: %d, args[1]: %c, i-done: %s\n", index, w_pos[i+1], args[index]);
 			}
 		}
 		if(strcmp(args[index],"&")==0){
 			args[index][0] = '\0';
 		}
 	}
-	// cprintf("buffer: %s, command: %s, arguement: %s\n", buf, cmd, args[1]);
+	// cprintf("buffer: %s, command: %s, arguement: %s\n", buf, cmd, args[0]);
 }
 
 
@@ -419,10 +424,16 @@ void sys_exec(char* buf){
 	// memcpy(bufcpy, buf, strlen(buf));
 	get_cmd(buf);
 	env_free(curenv);
-	// struct Env* e;
 	env_alloc(&curenv, parent_id);
 	curenv->env_id = cur_id;
-	// char* cmd = get_cmd(bufcpy);
+	char argv[10][1024];
+	int i;
+	for(i=0;i<10;i++){
+		int j;
+		for(j=0;j<1024;j++){
+			argv[i][j] = args[i][j];
+		}
+	}
 	// cprintf("\n\ncommand: %s, args[0]: %s, args[1]: %s\n\n",cmd, args[0], args[1]);
 	if(strcmp(cmd, (const char*)("factorial")) == 0){
 		extern uint8_t ENV_PASTE3(_binary_obj_, user_factorial , _start)[];
@@ -450,8 +461,27 @@ void sys_exec(char* buf){
 	}
 	// extern uint8_t ENV_PASTE3(_binary_obj_, user_hello , _start)[];
 	// load_icode(curenv,ENV_PASTE3(_binary_obj_, user_hello , _start));
-	// lcr3(e->env_pgdir);
-	
+	lcr3(PADDR(curenv->env_pgdir));
+	int argc = 0;
+	uint32_t sp = USTACKTOP;
+	uint32_t ustack[13];
+	for(argc = 0; strlen(argv[argc]) > 0; argc++) {
+	    if(argc >= 10) panic("argc>=10");
+	    sp = (sp - (strlen(argv[argc]) + 1)) & ~3;
+	    memcpy((void *)sp, argv[argc], strlen(argv[argc]) + 1);
+	    ustack[2+argc] = sp;
+	  }
+	  ustack[2+argc] = 0;
+
+	  // ustack[0] = 0xffffffff;  // fake return PC
+	  // cprintf("argc ppushed: %d\n", argc);
+	  ustack[0] = argc;
+	  ustack[1] = sp - (argc+1)*4;  // argv pointer
+
+	  sp -= (2+argc+1) * 4;
+	  memcpy((void *)sp, ustack, (2+argc+1)*4);
+	  curenv->env_tf.tf_esp = sp;
+	lcr3(PADDR(kern_pgdir));
 	env_run(curenv);
 	// sched_yield();
 	// cprintf("\n\nheeeeeeeeeeelo---------------\n\n");
