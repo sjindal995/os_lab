@@ -82,6 +82,7 @@ KERN_BINFILES +=	user/idle \
 			user/pingpong \
 			user/pingpongs \
 			user/primes
+
 KERN_OBJFILES := $(patsubst %.c, $(OBJDIR)/%.o, $(KERN_SRCFILES))
 KERN_OBJFILES := $(patsubst %.S, $(OBJDIR)/%.o, $(KERN_OBJFILES))
 KERN_OBJFILES := $(patsubst $(OBJDIR)/lib/%, $(OBJDIR)/kern/%, $(KERN_OBJFILES))
@@ -116,13 +117,25 @@ $(OBJDIR)/kern/kernel: $(KERN_OBJFILES) $(KERN_BINFILES) kern/kernel.ld \
 	$(V)$(OBJDUMP) -S $@ > $@.asm
 	$(V)$(NM) -n $@ > $@.sym
 
+$(OBJDIR)/guest/kernel:
+	@mkdir -p $(OBJDIR)/guest
+	cp user/kernel $(OBJDIR)/guest/kernel
+
+$(OBJDIR)/guest/boot:
+	@mkdir -p $(OBJDIR)/guest
+	cp user/boot.out $(OBJDIR)/guest/boot
+
 # How to build the kernel disk image
-$(OBJDIR)/kern/kernel.img: $(OBJDIR)/kern/kernel $(OBJDIR)/boot/boot
+$(OBJDIR)/kern/kernel.img: $(OBJDIR)/kern/kernel $(OBJDIR)/boot/boot $(OBJDIR)/guest/boot $(OBJDIR)/guest/kernel
 	@echo + mk $@
 	$(V)dd if=/dev/zero of=$(OBJDIR)/kern/kernel.img~ count=10000 2>/dev/null
 	$(V)dd if=$(OBJDIR)/boot/boot of=$(OBJDIR)/kern/kernel.img~ conv=notrunc 2>/dev/null
 	$(V)dd if=$(OBJDIR)/kern/kernel of=$(OBJDIR)/kern/kernel.img~ seek=1 conv=notrunc 2>/dev/null
 	$(V)mv $(OBJDIR)/kern/kernel.img~ $(OBJDIR)/kern/kernel.img
+	$(V)dd if=$(OBJDIR)/guest/boot of=$(OBJDIR)/guest/kernel.img~ conv=notrunc 2>/dev/null
+	$(V)dd if=$(OBJDIR)/guest/kernel of=$(OBJDIR)/guest/kernel.img~ seek=5001 conv=notrunc 2>/dev/null
+	$(V)mv $(OBJDIR)/guest/kernel.img~ $(OBJDIR)/guest/kernel.img
+	
 
 all: $(OBJDIR)/kern/kernel.img
 
