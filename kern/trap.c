@@ -239,21 +239,28 @@ trap_dispatch(struct Trapframe *tf)
 	uint32_t ret_sys;
 	switch(tf->tf_trapno){
 		case T_PGFLT:
-			page_fault_handler(tf);
+			if(curenv->env_type != ENV_TYPE_GUEST)
+				page_fault_handler(tf);
 			break;
 		case T_BRKPT:
-			monitor(tf);
+			if(curenv->env_type != ENV_TYPE_GUEST)
+				monitor(tf);
 			break;
 		case T_DEBUG:
-			monitor(tf);
+			if(curenv->env_type != ENV_TYPE_GUEST)
+				monitor(tf);
 			break;
 		case T_SYSCALL:
-			ret_sys = syscall(regs->reg_eax, regs->reg_edx, regs->reg_ecx, regs->reg_ebx, regs->reg_edi, regs->reg_esi);
-			regs->reg_eax = ret_sys;
+			if(curenv->env_type != ENV_TYPE_GUEST){
+				ret_sys = syscall(regs->reg_eax, regs->reg_edx, regs->reg_ecx, regs->reg_ebx, regs->reg_edi, regs->reg_esi);
+				regs->reg_eax = ret_sys;
+			}
 			break;
 		case IRQ_OFFSET+IRQ_TIMER:
-			lapic_eoi();
-			sched_yield();
+			if(curenv->env_type != ENV_TYPE_GUEST){
+				lapic_eoi();
+				sched_yield();
+			}
 			break;
 		case IRQ_OFFSET+IRQ_KBD:
 			kbd_intr();

@@ -118,3 +118,7 @@ void sys_exec(char* buf){
 void sys_wait(){
 	syscall(SYS_wait, 0, 0, 0, 0, 0, 0);
 }
+
+void sys_guest(){
+	syscall(SYS_guest, 0, 0, 0, 0, 0, 0);
+}

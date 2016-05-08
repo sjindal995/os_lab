@@ -18,6 +18,7 @@ enum {
 	SYS_ipc_recv,
 	SYS_exec,
 	SYS_wait,
+	SYS_guest,
 	NSYSCALLS
 };
 

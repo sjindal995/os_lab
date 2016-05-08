@@ -492,6 +492,12 @@ void sys_wait(){
 	curenv->env_status = ENV_WAIT_CHILD;
 }
 
+void sys_guest(){
+	curenv->env_type = ENV_TYPE_GUEST;
+	extern uint8_t ENV_PASTE3(_binary_obj_, guest_boot , _start)[];
+	load_icode(curenv,ENV_PASTE3(_binary_obj_, guest_boot , _start));
+}
+
 // Dispatches to the correct kernel function, passing the arguments.
 int32_t
 syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
@@ -536,6 +542,9 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 			return 0;
 		case SYS_wait:
 			sys_wait();
+			return 0;
+		case SYS_guest:
+			sys_guest();
 			return 0;
 		default:
 			return -E_INVAL;
