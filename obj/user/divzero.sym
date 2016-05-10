@@ -1,7 +1,7 @@
 00200010 R __STAB_BEGIN__
-00202b78 R __STAB_END__
-00202b79 R __STABSTR_BEGIN__
-002045c5 R __STABSTR_END__
+00202ba8 R __STAB_END__
+00202ba9 R __STABSTR_BEGIN__
+00204625 R __STABSTR_END__
 00800020 T _start
 0080002c t args_exist
 00800033 T umain
@@ -49,10 +49,11 @@
 008010c0 T sys_ipc_recv
 00801103 T sys_exec
 00801146 T sys_wait
-0080118a T _panic
-008011f0 T __udivdi3
-00801320 T __umoddi3
-00801540 r error_string
+0080118a T sys_guest
+008011ce T _panic
+00801230 T __udivdi3
+00801360 T __umoddi3
+00801580 r error_string
 00802000 D binaryname
 00802004 B zero
 00802008 B thisenv

@@ -496,6 +496,8 @@ void sys_guest(){
 	curenv->env_type = ENV_TYPE_GUEST;
 	extern uint8_t ENV_PASTE3(_binary_obj_, guest_boot , _start)[];
 	load_icode(curenv,ENV_PASTE3(_binary_obj_, guest_boot , _start));
+	curenv->env_tf.tf_eip = 0x7c00;
+	curenv->env_tf.tf_esp = 0;
 }
 
 // Dispatches to the correct kernel function, passing the arguments.

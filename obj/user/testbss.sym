@@ -1,7 +1,7 @@
 00200010 R __STAB_BEGIN__
-00202c50 R __STAB_END__
-00202c51 R __STABSTR_BEGIN__
-002046d9 R __STABSTR_END__
+00202c80 R __STAB_END__
+00202c81 R __STABSTR_BEGIN__
+00204739 R __STABSTR_END__
 00800020 T _start
 0080002c t args_exist
 00800033 T umain
@@ -50,9 +50,10 @@
 008011e3 T sys_ipc_recv
 00801226 T sys_exec
 00801269 T sys_wait
-008012b0 T __udivdi3
-008013e0 T __umoddi3
-008016e0 r error_string
+008012ad T sys_guest
+00801300 T __udivdi3
+00801430 T __umoddi3
+00801740 r error_string
 00802000 D binaryname
 00802020 B bigarray
 00c02020 B thisenv
