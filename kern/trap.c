@@ -237,45 +237,147 @@ trap_dispatch(struct Trapframe *tf)
 
 	struct PushRegs *regs = &(tf->tf_regs);
 	uint32_t ret_sys;
-	switch(tf->tf_trapno){
-		case T_PGFLT:
-			// if(curenv->env_type != ENV_TYPE_GUEST)
+	uint32_t opcode = *(uint32_t*)tf->tf_eip;
+	uint32_t opcode1 = opcode & 0xff;
+	uint32_t opcode2 = opcode & 0xffff;
+	uint32_t opcode3 = opcode & 0xffffff;
+
+	if(curenv->env_type == ENV_TYPE_GUEST){
+		switch(tf->tf_trapno){
+			case T_PGFLT:
+				cprintf("***********pgfault opcode: %08x\n", opcode);
+				cprintf("***********pgfault eip: %08x\n", curenv->env_tf.tf_eip);
+				// struct PageInfo *p;
+				// cprintf("entry\n");
+				// p = page_alloc(ALLOC_ZERO);
+				// int r = page_insert(curenv->env_pgdir, p, (void *)(rcr2()), PTE_W | PTE_P | PTE_U);
+				// cprintf("exit: %d\n", 1);
 				page_fault_handler(tf);
-			break;
-		case T_BRKPT:
-			// if(curenv->env_type != ENV_TYPE_GUEST)
-				monitor(tf);
-			break;
-		case T_DEBUG:
-			// if(curenv->env_type != ENV_TYPE_GUEST)
-				monitor(tf);
-			break;
-		case T_SYSCALL:
-			// if(curenv->env_type != ENV_TYPE_GUEST){
-				ret_sys = syscall(regs->reg_eax, regs->reg_edx, regs->reg_ecx, regs->reg_ebx, regs->reg_edi, regs->reg_esi);
-				regs->reg_eax = ret_sys;
-			// }
-			break;
-		case IRQ_OFFSET+IRQ_TIMER:
-			// if(curenv->env_type != ENV_TYPE_GUEST){
-				lapic_eoi();
-				sched_yield();
-			// }
-			break;
-		case IRQ_OFFSET+IRQ_KBD:
-			kbd_intr();
-			break;
-		case IRQ_OFFSET+IRQ_SERIAL:
-			serial_intr();
-			break;
-		default:
-			print_trapframe(tf);
-			if (tf->tf_cs == GD_KT)
-				panic("unhandled trap in kernel");
-			else {
-				env_destroy(curenv);
-				return;
-			}
+				break;
+				// switch(opcode1 & 0xff){
+				// 	default:
+				// 		switch(opcode2 & 0xff){
+				// 			case 0xf2:
+				// 				curenv->env_tf.tf_eip += 2;
+				// 				break;
+				// 			default:
+				// 				switch(opcode3 & 0xff){
+				// 					default:
+				// 					cprintf("***********pgfault opcode: %08x\n", opcode);
+				// 					cprintf("***********pgfault eip: %08x\n", curenv->env_tf.tf_eip);
+				// 					curenv->env_tf.tf_eip += 1;
+				// 				}
+				// 				break;
+				// 		}
+				// 		break;
+				// }
+				// break;
+			
+			case T_GPFLT:
+				// cprintf("===========opcode: %08x\n", opcode);
+				// cprintf("===========eip: %08x\n", curenv->env_tf.tf_eip);
+				switch(opcode3){
+					case 0x16010f:
+						curenv->env_tf.tf_eip += 3;
+						break;
+					case 0xc0220f:
+						curenv->env_tf.tf_eip += 3;
+						break;
+					// case 0x7c32ea:
+					// 	curenv->env_tf.tf_eip += 5;
+					// 	break;
+					default:
+						switch(opcode2){
+							case 0xd08e:
+								curenv->env_tf.tf_eip += 2;
+								break;
+							case 0xd88e:
+								curenv->env_tf.tf_eip += 2;
+								break;
+							case 0xc08e:
+								curenv->env_tf.tf_eip += 2;
+								break;
+							case 0xe08e:
+								curenv->env_tf.tf_eip += 2;
+								break;
+							case 0xe88e:
+								curenv->env_tf.tf_eip += 2;
+								break;
+							default:
+								switch(opcode1){
+									case 0xfa:
+										curenv->env_tf.tf_eip += 1;
+										break;
+									case 0xea:
+										// cprintf("===========opcode: %x\n", opcode);
+										// cprintf("===========eip: %x\n", curenv->env_tf.tf_eip);
+										// cprintf("=============================");
+										curenv->env_tf.tf_eip += 1;
+										break;
+									default:
+										cprintf("===========opcode: %x\n", opcode);
+										cprintf("===========eip: %x\n", curenv->env_tf.tf_eip);
+										curenv->env_tf.tf_eip += 1;
+								}
+								break;
+						}
+						break;
+				}
+				break;
+			default:
+				cprintf("===========opcode: %x\n", opcode);
+				cprintf("===========eip: %x\n", curenv->env_tf.tf_eip);
+				cprintf("ggggggggggggggggggggggggggggg\n");
+				print_trapframe(tf);
+				if (tf->tf_cs == GD_KT)
+					panic("unhandled trap in kernel");
+				else {
+					env_destroy(curenv);
+					return;
+				}
+		}	
+	}
+	else{
+		switch(tf->tf_trapno){
+			case T_PGFLT:
+				// if(curenv->env_type != ENV_TYPE_GUEST)
+					page_fault_handler(tf);
+				break;
+			case T_BRKPT:
+				// if(curenv->env_type != ENV_TYPE_GUEST)
+					monitor(tf);
+				break;
+			case T_DEBUG:
+				// if(curenv->env_type != ENV_TYPE_GUEST)
+					monitor(tf);
+				break;
+			case T_SYSCALL:
+				// if(curenv->env_type != ENV_TYPE_GUEST){
+					ret_sys = syscall(regs->reg_eax, regs->reg_edx, regs->reg_ecx, regs->reg_ebx, regs->reg_edi, regs->reg_esi);
+					regs->reg_eax = ret_sys;
+				// }
+				break;
+			case IRQ_OFFSET+IRQ_TIMER:
+				// if(curenv->env_type != ENV_TYPE_GUEST){
+					lapic_eoi();
+					sched_yield();
+				// }
+				break;
+			case IRQ_OFFSET+IRQ_KBD:
+				kbd_intr();
+				break;
+			case IRQ_OFFSET+IRQ_SERIAL:
+				serial_intr();
+				break;
+			default:
+				print_trapframe(tf);
+				if (tf->tf_cs == GD_KT)
+					panic("unhandled trap in kernel");
+				else {
+					env_destroy(curenv);
+					return;
+				}
+		}
 	}
 	// Unexpected trap: The user process or the kernel has a bug.
 }
